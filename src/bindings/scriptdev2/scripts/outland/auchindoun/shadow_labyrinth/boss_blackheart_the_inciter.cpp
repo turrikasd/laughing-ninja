@@ -16,7 +16,7 @@
 
 /* ScriptData
 SDName: Boss_Blackheart_the_Inciter
-SD%Complete: 60
+SD%Complete: 80
 SDComment: Incite Chaos needs further research and core support
 SDCategory: Auchindoun, Shadow Labyrinth
 EndScriptData */
@@ -28,6 +28,7 @@ enum
 {
     SPELL_INCITE_CHAOS      = 33676,                        // triggers 33684 on party members - needs core support
     SPELL_CHARGE            = 33709,
+	SPELL_H_CHARGE			= 43519,
     SPELL_WAR_STOMP         = 33707,
 
     SAY_INTRO1              = -1555008,
@@ -58,17 +59,23 @@ struct MANGOS_DLL_DECL boss_blackheart_the_inciterAI : public ScriptedAI
     boss_blackheart_the_inciterAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+		m_bIsRegularMode = pCreature->GetMap()->IsRegularDifficulty();
         Reset();
     }
 
     ScriptedInstance* m_pInstance;
+	bool m_bIsRegularMode;
+	bool m_calledforHelp;
 
     uint32 m_uiInciteChaosTimer;
     uint32 m_uiChargeTimer;
     uint32 m_uiKnockbackTimer;
+	uint32 m_helpTimer;
 
     void Reset() override
     {
+		m_calledforHelp		 = false;
+		m_helpTimer			 = 5000;
         m_uiInciteChaosTimer = 50000;
         m_uiChargeTimer      = urand(30000, 37000);
         m_uiKnockbackTimer   = urand(10000, 14000);
@@ -76,12 +83,18 @@ struct MANGOS_DLL_DECL boss_blackheart_the_inciterAI : public ScriptedAI
 
     void KilledUnit(Unit* /*pVictim*/) override
     {
-        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
+		switch (urand(0, 4))
+		{
+			case 0: DoScriptText(SAY_SLAY1, m_creature); break;
+            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
+            case 2: DoScriptText(SAY2_SLAY1, m_creature); break;
+			case 3: DoScriptText(SAY2_SLAY2, m_creature); break;
+		}
     }
 
     void JustDied(Unit* /*pKiller*/) override
     {
-        DoScriptText(SAY_DEATH, m_creature);
+		DoScriptText(urand(0, 1) ? SAY_DEATH : SAY2_DEATH, m_creature);
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_INCITER, DONE);
@@ -89,11 +102,14 @@ struct MANGOS_DLL_DECL boss_blackheart_the_inciterAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/) override
     {
-        switch (urand(0, 2))
+        switch (urand(0, 5))
         {
             case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
             case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
+			case 3: DoScriptText(SAY2_AGGRO1, m_creature); break;
+			case 4: DoScriptText(SAY2_AGGRO2, m_creature); break;
+			case 5: DoScriptText(SAY2_AGGRO3, m_creature); break;
         }
 
         if (m_pInstance)
@@ -112,6 +128,16 @@ struct MANGOS_DLL_DECL boss_blackheart_the_inciterAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+		if (!m_calledforHelp)
+		{
+			if (m_helpTimer < uiDiff)
+			{
+				m_creature->CallForHelp(70.0f); // Get owned if you didn't clear the room
+				DoScriptText(urand(0, 1) ? SAY_HELP : SAY2_HELP, m_creature);
+				m_calledforHelp = true;
+			} else m_helpTimer -= uiDiff;
+		}
+
         // ToDo: this needs future core and script support
         /*if (m_uiInciteChaosTimer < uiDiff)
         {
@@ -125,7 +151,7 @@ struct MANGOS_DLL_DECL boss_blackheart_the_inciterAI : public ScriptedAI
         if (m_uiChargeTimer < uiDiff)
         {
             Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0);
-            if (pTarget && DoCastSpellIfCan(pTarget, SPELL_CHARGE) == CAST_OK)
+            if (pTarget && DoCastSpellIfCan(pTarget, (m_bIsRegularMode ? SPELL_CHARGE : SPELL_H_CHARGE)) == CAST_OK)
                 m_uiChargeTimer = urand(30000, 43000);
         }
         else
