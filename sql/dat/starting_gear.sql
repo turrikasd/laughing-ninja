@@ -60,7 +60,7 @@ CREATE PROCEDURE UpdateTemplates()
 BEGIN
 
 UPDATE item_template
-SET SellPrice='0', Flags='1', DisenchantID='-1'
+SET SellPrice='0', Flags='1', DisenchantID='0'
 WHERE
 (
 entry = @BAG OR
