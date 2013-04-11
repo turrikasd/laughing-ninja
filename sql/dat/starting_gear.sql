@@ -100,7 +100,6 @@ entry = @MAG_RI OR
 entry = @MAG_TR OR
 
 entry = @DRU_2H OR
-entry = @DRU_RA OR
 entry = @DRU_HA OR
 entry = @DRU_NE OR
 entry = @DRU_SH OR
