@@ -609,7 +609,15 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
 
     m_name = name;
 
-    PlayerInfo const* info = sObjectMgr.GetPlayerInfo(race, class_);
+	PlayerInfo const* info;
+
+	if (!sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
+	    info = sObjectMgr.GetPlayerInfo(race, class_);
+	else
+	{
+		info = sObjectMgr.GetRandomPlayerInfo();
+	}
+
     if (!info)
     {
         sLog.outError("Player have incorrect race/class pair. Can't be loaded.");
