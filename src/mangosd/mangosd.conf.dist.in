@@ -739,6 +739,7 @@ MinPlayerName = 2
 MinCharterName = 2
 MinPetName = 2
 CharactersCreatingDisabled = 0
+EnableStartingItems = 1
 CharactersPerAccount = 50
 CharactersPerRealm = 10
 SkipCinematics = 0
