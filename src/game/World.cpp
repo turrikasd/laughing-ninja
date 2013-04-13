@@ -557,6 +557,8 @@ void World::LoadConfigSettings(bool reload)
     setConfigMinMax(CONFIG_UINT32_MIN_PET_NAME,     "MinPetName",     2, 1, MAX_PET_NAME);
 
     setConfig(CONFIG_UINT32_CHARACTERS_CREATING_DISABLED, "CharactersCreatingDisabled", 0);
+	setConfig(CONFIG_BOOL_START_ITEMS_ENABLED,			  "EnableStartingItems", true);
+	setConfig(CONFIG_BOOL_RANDOM_SPAWN,					  "EnableRandomSpawn", false);
 
     setConfigMinMax(CONFIG_UINT32_CHARACTERS_PER_REALM, "CharactersPerRealm", 10, 1, 10);
 
