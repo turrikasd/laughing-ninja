@@ -1,0 +1,3 @@
+add priest racials to trainer
+spell delays
+check spell reflection
