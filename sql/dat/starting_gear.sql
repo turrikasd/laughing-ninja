@@ -3,6 +3,7 @@ DELETE FROM playercreateinfo_item;
  
 -- GENERAL
 SET @BAG = 4497; -- Heavy Brown Bag
+SET @QUIVER = 7371; -- Heavy Quiver
 SET @FOOD = 27854; -- Smoked Talbuk Venison
 SET @WATER = 8766; -- Morning Glory Dew
 SET @ARROW = 28053; -- Wicked Arrow
@@ -86,7 +87,7 @@ SET @ROG_TR = 19120; -- Rune of the Guard Captain
 
 -- PALYDAN ITEMS
 SET @PAL_2H = 12969; -- Seeping Willow
-SET @PAL_HE = 22411; -- Helm of the Executioner
+SET @PAL_HA = 22411; -- Helm of the Executioner
 SET @PAL_NE = 5029;  -- Talisman of the Naga Lord
 SET @PAL_SH = 10374; -- Imbued Plate Pauldrons
 SET @PAL_CL = 20693; -- Weighted Cloak
@@ -591,6 +592,7 @@ DO
 	INSERT INTO playercreateinfo_item VALUES (i, CL, @BAG, '3');
 	INSERT INTO playercreateinfo_item VALUES (i, CL, @FOOD, '40');
 	INSERT INTO playercreateinfo_item VALUES (i, CL, @WATER, '40');
+	INSERT INTO playercreateinfo_item VALUES (i, CL, @QUIVER, '1');
 	INSERT INTO playercreateinfo_item VALUES (i, CL, @ARROW, '2000');
  
 	INSERT INTO playercreateinfo_item VALUES (i, CL, @HUN_2H, '1');
