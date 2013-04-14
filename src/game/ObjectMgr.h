@@ -504,16 +504,23 @@ class ObjectMgr
         PlayerInfo const* GetRandomPlayerInfo() const
         {
 			unsigned char loopSafeguard = 0;
-			PlayerInfo const* info;
+			char x, y;
+
 			do
 			{
-			char x = rand() % 11 + 1;
-			char y = rand() % 11 + 1;
-            info = &playerInfo[x][y];
+			x = rand() % 11 + 1;
+			y = rand() % 11 + 1;
+
+			// Break if we found a set value
+			if (playerInfo[x][y].positionX != 0 || playerInfo[x][y].positionY != 0 || playerInfo[x][y].positionZ != 0)
+				break;
 
 			loopSafeguard++;
-			} while (loopSafeguard != 255 && info->positionX == 0 && info->positionY == 0 && info->positionZ == 0);
-            return info;
+			} while (loopSafeguard != 255); // Break after 255 unsuccesful loops
+
+			// Construct out info
+			PlayerInfo const* outInfo = &playerInfo[x][y];
+            return outInfo;
         }
         void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
 

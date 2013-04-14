@@ -609,14 +609,8 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
 
     m_name = name;
 
-	PlayerInfo const* info;
-
-	if (!sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
-	    info = sObjectMgr.GetPlayerInfo(race, class_);
-	else
-	{
-		info = sObjectMgr.GetRandomPlayerInfo();
-	}
+	PlayerInfo const* info = sObjectMgr.GetPlayerInfo(race, class_);
+	PlayerInfo const* spawn;
 
     if (!info)
     {
@@ -641,10 +635,26 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     for (int i = 0; i < PLAYER_SLOTS_COUNT; ++i)
         m_items[i] = NULL;
 
-    SetLocationMapId(info->mapId);
-    Relocate(info->positionX, info->positionY, info->positionZ, info->orientation);
 
-    SetMap(sMapMgr.CreateMap(info->mapId, this));
+	// If we should find a random spawn
+	if (sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
+	{
+		spawn = sObjectMgr.GetRandomPlayerInfo();
+	}
+
+	// Spawn at the random spawn, if not found then spawn normally
+	if (spawn != 0)
+	{
+		SetLocationMapId(spawn->mapId);
+		Relocate(spawn->positionX, spawn->positionY, spawn->positionZ, spawn->orientation);
+		SetMap(sMapMgr.CreateMap(spawn->mapId, this));
+	}
+	else
+	{
+		SetLocationMapId(info->mapId);
+		Relocate(info->positionX, info->positionY, info->positionZ, info->orientation);
+		SetMap(sMapMgr.CreateMap(info->mapId, this));
+	}
 
     uint8 powertype = cEntry->powerType;
 
