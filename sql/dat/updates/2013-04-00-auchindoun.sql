@@ -68,5 +68,8 @@ INSERT INTO `creature_equip_template_raw` VALUES (2259, 20384, 0, 0, 50268674, 0
 UPDATE `creature_template` SET `equipment_id`='2259' WHERE `entry` IN (18500, 20320);
 
 --
--- Mana Tombs
+-- Sethekk Halls
 --
+
+-- Correcting faction for Sethekk Prophet (heroic)
+UPDATE `creature_template` SET `faction_A`='16', `faction_H`='16' WHERE (`entry`='20695');
