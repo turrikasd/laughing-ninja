@@ -1124,6 +1124,7 @@ class SpellMgr
         void LoadSpellProcEvents();
         void LoadSpellProcItemEnchant();
         void LoadSpellBonuses();
+		void LoadSpellCustomAttr();
         void LoadSpellTargetPositions();
         void LoadSpellThreats();
         void LoadSkillLineAbilityMap();

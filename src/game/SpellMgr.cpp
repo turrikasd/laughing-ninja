@@ -1741,6 +1741,46 @@ void SpellMgr::LoadSpellThreats()
     sLog.outString(">> Loaded %u spell threat entries", rankHelper.worker.count);
 }
 
+void SpellMgr::LoadSpellCustomAttr() // set custom attributes for spells
+{
+	uint32 oldMSTime = WorldTimer::getMSTime();
+
+	for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
+	{
+		SpellEntry* spellinfo = (SpellEntry*)sSpellStore.LookupEntry(i);
+		if (spellinfo)
+		{
+			switch (spellinfo->Id)
+			{
+				case 1776: case 1777: case 8629: case 11285: case 11286: case 38764: // Gouge
+				case 7922: // Charge Stun
+				case 25274: // Intercept Stun
+				case 2094: // Blind
+					spellinfo->speed = 590.0f;
+					break;
+				case 1933: // Cheap Shot
+				case 6770: case 2070: case 11297: // Sap
+					spellinfo->speed = 1230.0f;
+					break;
+				case 1533: // Flare
+				case 34490: // Silencing Shot
+				case 26679: // Deadly Throw
+					spellinfo->speed = 0;
+					break;
+				case 34709: // Shadow Sight (arena)
+					spellinfo->AttributesEx |= SPELL_ATTR_EX_NEGATIVE;
+					break;
+				case 5171: case 6774: // Slice and Dice should not put you in combat nor remove stealth
+					spellinfo->AttributesEx3 |= SPELL_ATTR_EX3_NO_INITIAL_AGGRO;
+					spellinfo->AttributesEx |= SPELL_ATTR_EX_NOT_BREAK_STEALTH;
+					break;
+			}
+		}
+	}
+	sLog.outString();
+	sLog.outString(">> Loaded spell custom attributes in %u ms", WorldTimer::getMSTimeDiff(oldMSTime, WorldTimer::getMSTime()));
+}
+
 bool SpellMgr::IsRankSpellDueToSpell(SpellEntry const* spellInfo_1, uint32 spellId_2) const
 {
     SpellEntry const* spellInfo_2 = sSpellStore.LookupEntry(spellId_2);

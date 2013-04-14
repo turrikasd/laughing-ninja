@@ -4149,6 +4149,12 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
 
     if (apply)
     {
+		if (GetId() == 34709) // Shadow Sight (arena), removes stealth and invisibility when used
+		{
+			target->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+			target->RemoveSpellsCausingAura(SPELL_AURA_MOD_INVISIBILITY);
+		}
+
         // Gronn Lord's Grasp, becomes stoned
         if (GetId() == 33572)
         {
