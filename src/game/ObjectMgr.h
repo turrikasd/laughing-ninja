@@ -492,13 +492,35 @@ class ObjectMgr
         }
         void GetPlayerClassLevelInfo(uint32 class_, uint32 level, PlayerClassLevelInfo* info) const;
 
-        PlayerInfo const* GetPlayerInfo(uint32 race, uint32 class_) const
+		PlayerInfo const* GetPlayerInfo(uint32 race, uint32 class_) const
+		{
+			if (race   >= MAX_RACES)   return NULL;
+			if (class_ >= MAX_CLASSES) return NULL;
+			PlayerInfo const* info = &playerInfo[race][class_];
+			if (info->displayId_m == 0 || info->displayId_f == 0) return NULL;
+			return info;
+		}
+
+        PlayerInfo const* GetRandomPlayerInfo() const
         {
-            if (race   >= MAX_RACES)   return NULL;
-            if (class_ >= MAX_CLASSES) return NULL;
-            PlayerInfo const* info = &playerInfo[race][class_];
-            if (info->displayId_m == 0 || info->displayId_f == 0) return NULL;
-            return info;
+			unsigned char loopSafeguard = 0;
+			char x, y;
+
+			do
+			{
+			x = rand() % 11 + 1;
+			y = rand() % 11 + 1;
+
+			// Break if we found a set value
+			if (playerInfo[x][y].positionX != 0 || playerInfo[x][y].positionY != 0 || playerInfo[x][y].positionZ != 0)
+				break;
+
+			loopSafeguard++;
+			} while (loopSafeguard != 255); // Break after 255 unsuccesful loops
+
+			// Construct out info
+			PlayerInfo const* outInfo = &playerInfo[x][y];
+            return outInfo;
         }
         void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
 

@@ -609,7 +609,9 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
 
     m_name = name;
 
-    PlayerInfo const* info = sObjectMgr.GetPlayerInfo(race, class_);
+	PlayerInfo const* info = sObjectMgr.GetPlayerInfo(race, class_);
+	PlayerInfo const* spawn;
+
     if (!info)
     {
         sLog.outError("Player have incorrect race/class pair. Can't be loaded.");
@@ -633,10 +635,26 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     for (int i = 0; i < PLAYER_SLOTS_COUNT; ++i)
         m_items[i] = NULL;
 
-    SetLocationMapId(info->mapId);
-    Relocate(info->positionX, info->positionY, info->positionZ, info->orientation);
 
-    SetMap(sMapMgr.CreateMap(info->mapId, this));
+	// If we should find a random spawn
+	if (sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
+	{
+		spawn = sObjectMgr.GetRandomPlayerInfo();
+	}
+
+	// Spawn at the random spawn, if not found then spawn normally
+	if (spawn != 0)
+	{
+		SetLocationMapId(spawn->mapId);
+		Relocate(spawn->positionX, spawn->positionY, spawn->positionZ, spawn->orientation);
+		SetMap(sMapMgr.CreateMap(spawn->mapId, this));
+	}
+	else
+	{
+		SetLocationMapId(info->mapId);
+		Relocate(info->positionX, info->positionY, info->positionZ, info->orientation);
+		SetMap(sMapMgr.CreateMap(info->mapId, this));
+	}
 
     uint8 powertype = cEntry->powerType;
 
@@ -717,57 +735,60 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
         addActionButton(action_itr->button, action_itr->action, action_itr->type);
 
     // original items
-    uint32 raceClassGender = GetUInt32Value(UNIT_FIELD_BYTES_0) & 0x00FFFFFF;
+	if (sWorld.getConfig(CONFIG_BOOL_START_ITEMS_ENABLED))
+	{
+		uint32 raceClassGender = GetUInt32Value(UNIT_FIELD_BYTES_0) & 0x00FFFFFF;
 
-    CharStartOutfitEntry const* oEntry = NULL;
-    for (uint32 i = 1; i < sCharStartOutfitStore.GetNumRows(); ++i)
-    {
-        if (CharStartOutfitEntry const* entry = sCharStartOutfitStore.LookupEntry(i))
-        {
-            if (entry->RaceClassGender == raceClassGender)
-            {
-                oEntry = entry;
-                break;
-            }
-        }
-    }
+		CharStartOutfitEntry const* oEntry = NULL;
+		for (uint32 i = 1; i < sCharStartOutfitStore.GetNumRows(); ++i)
+		{
+			if (CharStartOutfitEntry const* entry = sCharStartOutfitStore.LookupEntry(i))
+			{
+				if (entry->RaceClassGender == raceClassGender)
+				{
+					oEntry = entry;
+					break;
+				}
+			}
+		}
 
-    if (oEntry)
-    {
-        for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
-        {
-            if (oEntry->ItemId[j] <= 0)
-                continue;
+		if (oEntry)
+		{
+			for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
+			{
+				if (oEntry->ItemId[j] <= 0)
+					continue;
 
-            uint32 item_id = oEntry->ItemId[j];
+				uint32 item_id = oEntry->ItemId[j];
 
-            // just skip, reported in ObjectMgr::LoadItemPrototypes
-            ItemPrototype const* iProto = ObjectMgr::GetItemPrototype(item_id);
-            if (!iProto)
-                continue;
+				// just skip, reported in ObjectMgr::LoadItemPrototypes
+				ItemPrototype const* iProto = ObjectMgr::GetItemPrototype(item_id);
+				if (!iProto)
+					continue;
 
-            // BuyCount by default
-            int32 count = iProto->BuyCount;
+				// BuyCount by default
+				int32 count = iProto->BuyCount;
 
-            // special amount for foor/drink
-            if (iProto->Class == ITEM_CLASS_CONSUMABLE && iProto->SubClass == ITEM_SUBCLASS_FOOD)
-            {
-                switch (iProto->Spells[0].SpellCategory)
-                {
-                    case 11:                                // food
-                        if (iProto->Stackable > 4)
-                            count = 4;
-                        break;
-                    case 59:                                // drink
-                        if (iProto->Stackable > 2)
-                            count = 2;
-                        break;
-                }
-            }
+				// special amount for foor/drink
+				if (iProto->Class == ITEM_CLASS_CONSUMABLE && iProto->SubClass == ITEM_SUBCLASS_FOOD)
+				{
+					switch (iProto->Spells[0].SpellCategory)
+					{
+						case 11:                                // food
+							if (iProto->Stackable > 4)
+								count = 4;
+							break;
+						case 59:                                // drink
+							if (iProto->Stackable > 2)
+								count = 2;
+							break;
+					}
+				}
 
-            StoreNewItemInBestSlots(item_id, count);
-        }
-    }
+				StoreNewItemInBestSlots(item_id, count);
+			}
+		}
+	}
 
     for (PlayerCreateInfoItems::const_iterator item_id_itr = info->item.begin(); item_id_itr != info->item.end(); ++item_id_itr)
         StoreNewItemInBestSlots(item_id_itr->item_id, item_id_itr->item_amount);
@@ -3112,7 +3133,7 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
     bool disabled = (itr != m_spells.end()) ? itr->second.disabled : false;
     bool active = disabled ? itr->second.active : true;
 
-    bool learning = addSpell(spell_id, active, true, dependent, false);
+	bool learning = addSpell(spell_id, active, true, dependent, false);
 
     // prevent duplicated entires in spell book, also not send if not in world (loading)
     if (learning && IsInWorld())
@@ -20587,13 +20608,30 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
         return;
     }
 
+	// should we learn rank X instead of current rank
+	if (sWorld.getConfig(CONFIG_BOOL_TALENT_LEARN_HIGH_RANK))
+		spellid = GetSpellHighRank(spellid);
+
     // already known
     if (HasSpell(spellid))
         return;
 
     // learn! (other talent ranks will unlearned at learning)
-    learnSpell(spellid, false);
+	learnSpell(spellid, false);
     DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+}
+
+uint32 Player::GetSpellHighRank(uint32 spellid)
+{
+	switch (spellid)
+	{
+	case 11366:
+		return 12526;
+	case 31661:
+		return 33041;
+	}
+
+	return spellid;
 }
 
 void Player::UpdateFallInformationIfNeed(MovementInfo const& minfo, uint16 opcode)
