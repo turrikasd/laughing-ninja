@@ -609,14 +609,8 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
 
     m_name = name;
 
-	PlayerInfo const* info;
-
-	if (!sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
-	    info = sObjectMgr.GetPlayerInfo(race, class_);
-	else
-	{
-		info = sObjectMgr.GetRandomPlayerInfo();
-	}
+	PlayerInfo const* info = sObjectMgr.GetPlayerInfo(race, class_);
+	PlayerInfo const* spawn;
 
     if (!info)
     {
@@ -641,10 +635,26 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     for (int i = 0; i < PLAYER_SLOTS_COUNT; ++i)
         m_items[i] = NULL;
 
-    SetLocationMapId(info->mapId);
-    Relocate(info->positionX, info->positionY, info->positionZ, info->orientation);
 
-    SetMap(sMapMgr.CreateMap(info->mapId, this));
+	// If we should find a random spawn
+	if (sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
+	{
+		spawn = sObjectMgr.GetRandomPlayerInfo();
+	}
+
+	// Spawn at the random spawn, if not found then spawn normally
+	if (spawn != 0)
+	{
+		SetLocationMapId(spawn->mapId);
+		Relocate(spawn->positionX, spawn->positionY, spawn->positionZ, spawn->orientation);
+		SetMap(sMapMgr.CreateMap(spawn->mapId, this));
+	}
+	else
+	{
+		SetLocationMapId(info->mapId);
+		Relocate(info->positionX, info->positionY, info->positionZ, info->orientation);
+		SetMap(sMapMgr.CreateMap(info->mapId, this));
+	}
 
     uint8 powertype = cEntry->powerType;
 
@@ -3123,7 +3133,7 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
     bool disabled = (itr != m_spells.end()) ? itr->second.disabled : false;
     bool active = disabled ? itr->second.active : true;
 
-    bool learning = addSpell(spell_id, active, true, dependent, false);
+	bool learning = addSpell(spell_id, active, true, dependent, false);
 
     // prevent duplicated entires in spell book, also not send if not in world (loading)
     if (learning && IsInWorld())
@@ -20598,13 +20608,30 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
         return;
     }
 
+	// should we learn rank X instead of current rank
+	if (sWorld.getConfig(CONFIG_BOOL_TALENT_LEARN_HIGH_RANK))
+		spellid = GetSpellHighRank(spellid);
+
     // already known
     if (HasSpell(spellid))
         return;
 
     // learn! (other talent ranks will unlearned at learning)
-    learnSpell(spellid, false);
+	learnSpell(spellid, false);
     DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+}
+
+uint32 Player::GetSpellHighRank(uint32 spellid)
+{
+	switch (spellid)
+	{
+	case 11366:
+		return 12526;
+	case 31661:
+		return 33041;
+	}
+
+	return spellid;
 }
 
 void Player::UpdateFallInformationIfNeed(MovementInfo const& minfo, uint16 opcode)
