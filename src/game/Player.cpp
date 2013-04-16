@@ -20610,7 +20610,13 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 
 	// should we learn rank X instead of current rank
 	if (sWorld.getConfig(CONFIG_BOOL_TALENT_LEARN_HIGH_RANK))
-		spellid = GetSpellHighRank(spellid);
+	{
+		PlayerSpellMap::iterator itr = m_spells.find(spellid);
+		bool disabled = (itr != m_spells.end()) ? itr->second.disabled : false;
+
+		if (!disabled)
+			spellid = GetSpellHighRank(spellid);
+	}
 
     // already known
     if (HasSpell(spellid))
@@ -20625,9 +20631,9 @@ uint32 Player::GetSpellHighRank(uint32 spellid)
 {
 	switch (spellid)
 	{
-	case 11366:
+	case 11366: // Pyroblast
 		return 12526;
-	case 31661:
+	case 31661: // Dragon's Breath
 		return 33041;
 	}
 
