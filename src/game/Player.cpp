@@ -20631,10 +20631,75 @@ uint32 Player::GetSpellHighRank(uint32 spellid)
 {
 	switch (spellid)
 	{
+	case 12294: // Mortal Strike
+		return 21552;
+	case 23881: // Bloodthirst
+		return 23893;
+	case 23922: // Shield Slam
+		return 23924;
+
+	case 20473: // Holy Shock
+		return 20930;
+	case 20911: // Blessing of Sanctuary
+		return 20913;
+	case 20925: // Holy Shield
+		return 20927;
+	case 20375: // Seal of Command
+		return 20919;
+
+	case 1329: // Mutilate
+		return 34411;
+	case 16511: // Hemorrhage
+		return 17348;
+
+	case 14752: // Divine Spirit
+		return 14819;
+	case 15237: // Holy Nova
+		return 15431;
+	case 724: // Lightwell
+		return 27870;
+	case 34861: // Circle of Healing
+		return 34863;
+	case 15407: // Mind Flay
+		return 17314;
+
 	case 11366: // Pyroblast
 		return 12526;
 	case 31661: // Dragon's Breath
 		return 33041;
+	case 11113: // Blast Wave
+		return 13020;
+	case 11426: // Ice Barrier
+		return 13033;
+
+	case 18265: // Siphon Life
+		return 18881;
+	case 18220: // Dark Pact
+		return 18937;
+	case 17877: // Shadowburn
+		return 18871;
+	case 17962: // Conflagrate
+		return 18931;
+
+	case 19434: // Aimed Shot
+		return 20903;
+	case 19506: // Trueshot Aura
+		return 20905;
+	case 19306: // Counterattack
+		return 20910;
+	case 19386: // Wyvern Sting
+		return 24132;
+
+	case 16689: // Nature's Grasp
+		return 17329;
+	case 5570: // Insect Swarm
+		return 24976;
+	case 16857: // Faerie Fire (Feral)
+		return 17392;
+	case 33878: // Mangle (Bear)
+		return 33986;
+	case 33876: // Mangle (Cat)
+		return 33982;
 	}
 
 	return spellid;
