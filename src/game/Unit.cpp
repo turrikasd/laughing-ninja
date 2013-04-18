@@ -55,6 +55,58 @@
 #include <math.h>
 #include <stdarg.h>
 
+class StartCombatTimer : public BasicEvent
+{
+public:
+	StartCombatTimer(Unit* me, Unit* enemy) : _attacker(me), _enemy(enemy) {}
+
+	bool Execute(uint64 execTime, uint32 /*diff*/)
+	{
+		Unit* eOwner = _enemy->GetCharmerOrOwnerOrSelf();
+		if (eOwner->IsPvP())
+		{
+			_attacker->SetInCombatState(true, _enemy);
+			return true;
+		}
+
+		// check for duel
+		if (eOwner->GetTypeId() == TYPEID_PLAYER && ((Player*)eOwner)->duel)
+		{
+			if (Player const* myOwner = _attacker->GetCharmerOrOwnerPlayerOrPlayerItself())
+			{
+				if (myOwner->IsInDuelWith((Player const*)eOwner))
+				{
+					_attacker->SetInCombatState(true, _enemy);
+					return true;
+				}
+			}
+		}
+
+		_attacker->SetInCombatState(false, _enemy);
+		return true;
+	}
+
+private:
+	Unit* _attacker;
+	Unit* _enemy;
+};
+
+class RemoveReflectionAura : public BasicEvent
+{
+public:
+	RemoveReflectionAura(Unit* me, uint32 spellID) : _me(me), _spellID(spellID) {}
+
+	bool Execute(uint64 execTime, uint32 /*diff*/)
+	{
+		_me->RemoveAurasDueToSpell(_spellID);
+		return true;
+	}
+
+private:
+	Unit* _me;
+	uint32 _spellID;
+};
+
 float baseMoveSpeed[MAX_MOVE_TYPE] =
 {
     2.5f,                                                   // MOVE_WALK
@@ -6882,27 +6934,7 @@ void Unit::Unmount(bool from_aura)
 
 void Unit::SetInCombatWith(Unit* enemy)
 {
-    Unit* eOwner = enemy->GetCharmerOrOwnerOrSelf();
-    if (eOwner->IsPvP())
-    {
-        SetInCombatState(true, enemy);
-        return;
-    }
-
-    // check for duel
-    if (eOwner->GetTypeId() == TYPEID_PLAYER && ((Player*)eOwner)->duel)
-    {
-        if (Player const* myOwner = GetCharmerOrOwnerPlayerOrPlayerItself())
-        {
-            if (myOwner->IsInDuelWith((Player const*)eOwner))
-            {
-                SetInCombatState(true, enemy);
-                return;
-            }
-        }
-    }
-
-    SetInCombatState(false, enemy);
+	m_Events.AddEvent(new StartCombatTimer(this, enemy), m_Events.CalculateTime(500)); // 500 ms "delay" to do the combat check
 }
 
 void Unit::SetInCombatState(bool PvP, Unit* enemy)
@@ -6910,6 +6942,9 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
     // only alive units can be in combat
     if (!isAlive())
         return;
+
+	if (HasStealthAura() || HasInvisibilityAura()) // if attacker is in stealth or invisiblity then do not go in combat
+		return;
 
     if (PvP)
         m_CombatTimer = 5000;
@@ -8974,7 +9009,7 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* pTarget, uint32 procFlag, 
         {
             // If last charge dropped add spell to remove list
             if (triggeredByHolder->DropAuraCharge())
-                removedSpells.push_back(triggeredByHolder->GetId());
+				removedSpells.push_back(triggeredByHolder->GetId());
         }
 
         triggeredByHolder->SetInUse(false);
@@ -8987,7 +9022,7 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* pTarget, uint32 procFlag, 
         removedSpells.unique();
         // Remove auras from removedAuras
         for (RemoveSpellList::const_iterator i = removedSpells.begin(); i != removedSpells.end(); ++i)
-            RemoveAurasDueToSpell(*i);
+            m_Events.AddEvent(new RemoveReflectionAura(this, *i), m_Events.CalculateTime(500)); // added blizzard's server side 500ms delay on removing aura, allowing multiple spell reflections
     }
 }
 

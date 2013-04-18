@@ -1,5 +1,8 @@
 -- Empty the table
 DELETE FROM playercreateinfo_item;
+
+-- Alter the table
+ALTER TABLE playercreateinfo_item MODIFY COLUMN amount mediumint(3);
  
 -- GENERAL
 SET @BAG = 4497; -- Heavy Brown Bag

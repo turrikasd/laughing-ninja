@@ -991,6 +991,9 @@ void World::SetInitialWorldSettings()
     sLog.outString("Loading Spell Proc Item Enchant...");
     sSpellMgr.LoadSpellProcItemEnchant();                   // must be after LoadSpellChains
 
+	sLog.outString("Loading Spell Custom Attributes..."); // backported from trinitycore to allow editing spells
+	sSpellMgr.LoadSpellCustomAttr();
+
     sLog.outString("Loading Aggro Spells Definitions...");
     sSpellMgr.LoadSpellThreats();
 
