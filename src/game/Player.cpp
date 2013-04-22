@@ -610,7 +610,7 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     m_name = name;
 
 	PlayerInfo const* info = sObjectMgr.GetPlayerInfo(race, class_);
-	PlayerInfo const* spawn;
+	PlayerInfo const* spawn = sObjectMgr.GetRandomPlayerInfo();
 
     if (!info)
     {
@@ -635,15 +635,8 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     for (int i = 0; i < PLAYER_SLOTS_COUNT; ++i)
         m_items[i] = NULL;
 
-
-	// If we should find a random spawn
-	if (sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN))
-	{
-		spawn = sObjectMgr.GetRandomPlayerInfo();
-	}
-
-	// Spawn at the random spawn, if not found then spawn normally
-	if (spawn != 0)
+	// Spawn at random spawn if enabled in config file and found random spawn, else spawn normally
+	if (sWorld.getConfig(CONFIG_BOOL_RANDOM_SPAWN) && spawn != 0)
 	{
 		SetLocationMapId(spawn->mapId);
 		Relocate(spawn->positionX, spawn->positionY, spawn->positionZ, spawn->orientation);
